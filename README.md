@@ -1,2 +1,2 @@
-# GameEngine_OpenGL
+# Game_engine_OpenGL
 Will create game from scratch
