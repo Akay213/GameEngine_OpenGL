@@ -1,6 +1,47 @@
 #include<GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+
+struct ShaderProgramSource 
+{
+	std::string VertexSource;
+	std::string FragmentSource;
+};
+
+static ShaderProgramSource ParseShader(const std::string& filePath)
+{
+	std::ifstream stream(filePath);
+
+	enum class ShaderType
+	{
+		NONE = -1, VERTEX = 0, FRAGMENT = 1
+	};
+
+	std::string line;
+	std::stringstream ss[2];
+	ShaderType type = ShaderType::NONE;
+
+	while(getline(stream,line))
+	{
+		if (line.find("#shader") != std::string::npos)
+		{
+			if (line.find("#shader vertex") != std::string::npos)
+				type = ShaderType::VERTEX;
+			else if (line.find("#shader fragment") != std::string::npos)
+				type = ShaderType::FRAGMENT;
+		}
+		else 
+		{
+			if(type != ShaderType::NONE)
+				ss[(int)type] << line << '\n';
+		}
+	}
+
+	return { ss[0].str(), ss[1].str() };
+}
 
 
 static unsigned int CompileShader(unsigned int type, const std::string &source) 
@@ -95,6 +136,13 @@ int main(void)
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
 	//----------
 
+	ShaderProgramSource source = ParseShader("Assets/Shaders/Basic.shader");
+	std::cout << source.VertexSource << std::endl;
+	std::cout << source.FragmentSource << std::endl;
+
+	unsigned int shader = CreateShader(source.VertexSource,source.FragmentSource);
+	glUseProgram(shader);
+
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 
@@ -112,6 +160,8 @@ int main(void)
 		/* Poll for and process events */
 		glfwPollEvents();
 	}
+
+	//glDeleteProgram(shader);
 
 	glfwTerminate();
 	return 0;
